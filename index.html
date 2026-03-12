@@ -1,450 +1,902 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verzovací systémy: Úvod do Gitu</title>
-    <style>
-        :root {
-            --primary-color: #f05032; /* Git oranžovo-červená */
-            --bg-color: #f3f4f6;
-            --text-color: #1f2937;
-            --slide-bg: #ffffff;
-            --code-bg: #1e1e1e;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitHub – Průvodce pro nováčky</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body, html {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            height: 100vh;
-            overflow: hidden;
-        }
+    :root {
+      --bg:        #0d1117;
+      --bg2:       #161b22;
+      --bg3:       #21262d;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --blue:      #58a6ff;
+      --blue-dark: #1f6feb;
+      --green:     #3fb950;
+      --green-dim: #238636;
+      --orange:    #d29922;
+      --red:       #f85149;
+      --purple:    #bc8cff;
+      --white:     #ffffff;
+    }
 
-        .presentation-container {
-            position: relative;
-            width: 100%;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      overflow: hidden;
+    }
 
-        /* Progress Bar */
-        .progress-bar-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 6px;
-            background-color: #e5e7eb;
-            z-index: 1000;
-        }
+    /* ── Presentation container ───────────────────────────────────── */
+    #presentation {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
 
-        .progress-bar {
-            height: 100%;
-            background-color: var(--primary-color);
-            width: 0%;
-            transition: width 0.3s ease-out;
-        }
+    /* ── Slides ───────────────────────────────────────────────────── */
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px 80px;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: opacity .45s ease, transform .45s ease;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: all;
+    }
+    .slide.exit {
+      opacity: 0;
+      transform: translateX(-100%);
+    }
 
-        /* Slides */
-        .slides-wrapper {
-            flex-grow: 1;
-            position: relative;
-            overflow: hidden;
-        }
+    /* ── Navigation ───────────────────────────────────────────────── */
+    #nav {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      background: rgba(22,27,34,.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 48px;
+      padding: 10px 20px;
+    }
+    #nav button {
+      background: var(--bg3);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background .2s, border-color .2s;
+    }
+    #nav button:hover { background: var(--blue-dark); border-color: var(--blue); }
+    #slide-counter {
+      font-size: 1rem;
+      color: var(--muted);
+      min-width: 70px;
+      text-align: center;
+    }
 
-        .slide {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            padding: 60px 10%;
-            box-sizing: border-box;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.4s ease-in-out, visibility 0.4s ease-in-out;
-            overflow-y: auto;
-            background: var(--slide-bg);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+    /* ── Slide number indicator (top right) ──────────────────────── */
+    #slide-badge {
+      position: fixed;
+      top: 22px;
+      right: 32px;
+      font-size: .9rem;
+      color: var(--muted);
+      z-index: 100;
+    }
 
-        .slide.active {
-            opacity: 1;
-            visibility: visible;
-        }
+    /* ── Dot indicators ───────────────────────────────────────────── */
+    #dots {
+      display: flex;
+      gap: 8px;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: background .2s, transform .2s;
+    }
+    .dot.active { background: var(--blue); transform: scale(1.3); }
 
-        .slide-content {
-            max-width: 900px;
-            width: 100%;
-            padding-bottom: 100px; /* Space for controls */
-        }
+    /* ── Typography helpers ───────────────────────────────────────── */
+    .slide-title {
+      font-size: clamp(2.2rem, 4vw, 3.4rem);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 0.5em;
+      text-align: center;
+    }
+    .slide-subtitle {
+      font-size: clamp(1.3rem, 2.2vw, 1.8rem);
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 1.2em;
+    }
+    .slide-body {
+      font-size: clamp(1.15rem, 1.8vw, 1.5rem);
+      line-height: 1.75;
+      max-width: 900px;
+      text-align: center;
+    }
+    .highlight { color: var(--blue); font-weight: 600; }
+    .green     { color: var(--green); }
+    .orange    { color: var(--orange); }
+    .purple    { color: var(--purple); }
+    .red       { color: var(--red); }
 
-        /* Typography & Elements */
-        h1 {
-            color: var(--primary-color);
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            border-bottom: 3px solid #fca5a5;
-            padding-bottom: 10px;
-            display: inline-block;
-        }
+    /* ── Code block ───────────────────────────────────────────────── */
+    .code-block {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 32px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: clamp(1rem, 1.6vw, 1.35rem);
+      line-height: 1.9;
+      text-align: left;
+      margin: 1em 0;
+      width: 100%;
+      max-width: 820px;
+      position: relative;
+      overflow: hidden;
+    }
+    .code-block::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--blue), var(--purple));
+    }
+    .code-comment { color: var(--muted); }
+    .code-cmd     { color: var(--green); }
+    .code-arg     { color: var(--orange); }
+    .code-string  { color: var(--blue); }
+    .code-flag    { color: var(--purple); }
+    .dollar       { color: var(--muted); user-select: none; }
 
-        h2 {
-            color: #374151;
-            font-size: 1.8rem;
-            margin-top: 2rem;
-        }
+    /* ── Cards ────────────────────────────────────────────────────── */
+    .cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      max-width: 1100px;
+      margin-top: .6em;
+    }
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px 28px;
+      min-width: 240px;
+      flex: 1 1 240px;
+      max-width: 320px;
+      transition: border-color .25s, box-shadow .25s;
+    }
+    .card:hover {
+      border-color: var(--blue);
+      box-shadow: 0 0 18px rgba(88,166,255,.15);
+    }
+    .card h3 {
+      font-size: 1.2rem;
+      margin-bottom: .5em;
+    }
+    .card p {
+      font-size: 1.05rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
 
-        p, li {
-            font-size: 1.2rem;
-            line-height: 1.8;
-            color: #4b5563;
-        }
+    /* ── Icon ─────────────────────────────────────────────────────── */
+    .icon-big {
+      font-size: 3.5rem;
+      margin-bottom: 0.3em;
+      line-height: 1;
+    }
 
-        ul, ol {
-            margin-bottom: 1.5rem;
-        }
+    /* ── Steps ────────────────────────────────────────────────────── */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 820px;
+      width: 100%;
+      text-align: left;
+    }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 22px;
+      font-size: clamp(1rem, 1.5vw, 1.3rem);
+      line-height: 1.6;
+    }
+    .step-num {
+      background: var(--blue-dark);
+      color: var(--white);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1rem;
+    }
 
-        li {
-            margin-bottom: 0.8rem;
-        }
+    /* ── Two-column layout ────────────────────────────────────────── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      max-width: 1060px;
+      width: 100%;
+      align-items: start;
+      margin-top: .6em;
+    }
 
-        strong {
-            color: #111827;
-        }
+    /* ── Slide-specific gradients ─────────────────────────────────── */
+    #slide-1  { background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(31,111,235,.25) 0%, transparent 70%), var(--bg); }
+    #slide-3  { background: radial-gradient(ellipse 70% 50% at 80% 50%, rgba(63,185,80,.12) 0%, transparent 65%), var(--bg); }
+    #slide-7  { background: radial-gradient(ellipse 70% 50% at 20% 50%, rgba(188,140,255,.12) 0%, transparent 65%), var(--bg); }
+    #slide-11 { background: radial-gradient(ellipse 70% 50% at 50% 100%, rgba(210,153,34,.12) 0%, transparent 65%), var(--bg); }
+    #slide-13 { background: radial-gradient(ellipse 70% 50% at 50% 50%, rgba(88,166,255,.1) 0%, transparent 65%), var(--bg); }
 
-        .highlight {
-            background-color: #fef08a;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-            color: #854d0e;
-        }
+    /* ── Octocat logo SVG ─────────────────────────────────────────── */
+    .octocat { margin-bottom: 1rem; }
 
-        /* Code Blocks */
-        .code-block {
-            background-color: var(--code-bg);
-            color: #d4d4d4;
-            padding: 20px;
-            border-radius: 12px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 1.1rem;
-            margin: 20px 0;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            overflow-x: auto;
-        }
+    /* ── Badge pills ──────────────────────────────────────────────── */
+    .pill {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: .9rem;
+      font-weight: 600;
+      margin: 3px;
+    }
+    .pill-blue   { background: rgba(88,166,255,.18); color: var(--blue); border: 1px solid rgba(88,166,255,.3); }
+    .pill-green  { background: rgba(63,185,80,.18);  color: var(--green); border: 1px solid rgba(63,185,80,.3); }
+    .pill-purple { background: rgba(188,140,255,.18); color: var(--purple); border: 1px solid rgba(188,140,255,.3); }
+    .pill-orange { background: rgba(210,153,34,.18); color: var(--orange); border: 1px solid rgba(210,153,34,.3); }
 
-        .code-block .cmd { color: #569cd6; font-weight: bold; }
-        .code-block .arg { color: #ce9178; }
-        .code-block .comment { color: #6a9955; font-style: italic; }
+    /* ── PR flow ──────────────────────────────────────────────────── */
+    .flow {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+    .flow-step {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 20px;
+      font-size: 1.1rem;
+      text-align: center;
+      min-width: 140px;
+    }
+    .flow-arrow { font-size: 1.4rem; color: var(--muted); }
 
-        /* Alert Box */
-        .alert {
-            background-color: #eff6ff;
-            border-left: 6px solid #3b82f6;
-            padding: 20px;
-            border-radius: 0 8px 8px 0;
-            margin: 30px 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .alert.warning {
-            background-color: #fffbeb;
-            border-left-color: #f59e0b;
-        }
-
-        /* Controls */
-        .controls {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px 30px;
-            border-radius: 50px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-            z-index: 100;
-        }
-
-        button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        button:hover:not(:disabled) {
-            background-color: #d9381e;
-            transform: translateY(-2px);
-        }
-
-        button:disabled {
-            background-color: #d1d5db;
-            cursor: not-allowed;
-            color: #9ca3af;
-        }
-
-        .counter {
-            font-weight: bold;
-            font-size: 1.1rem;
-            color: #4b5563;
-            min-width: 60px;
-            text-align: center;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            h1 { font-size: 2rem; }
-            p, li { font-size: 1.1rem; }
-            .slide { padding: 40px 5%; }
-            .controls { bottom: 15px; padding: 10px 20px; width: 90%; justify-content: space-between;}
-            button { padding: 10px 16px; font-size: 0.9rem;}
-        }
-    </style>
+    /* ── Keyboard hint ────────────────────────────────────────────── */
+    #key-hint {
+      position: fixed;
+      top: 22px;
+      left: 32px;
+      font-size: .85rem;
+      color: var(--muted);
+      z-index: 100;
+    }
+    kbd {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: .8rem;
+      color: var(--text);
+    }
+  </style>
 </head>
 <body>
 
-    <div class="presentation-container">
-        <div class="progress-bar-container">
-            <div class="progress-bar" id="progressBar"></div>
-        </div>
+<div id="key-hint"><kbd>←</kbd> <kbd>→</kbd> nebo šipky</div>
+<div id="slide-badge"></div>
 
-        <div class="slides-wrapper">
-            
-            <!-- Slide 1 -->
-            <div class="slide active">
-                <div class="slide-content">
-                    <h1>1. Co to vlastně řešíme?</h1>
-                    <p>Vítejte u dnešní online lekce! Minule jste si založili GitHub a nahráli tam svůj web. Dnes se podíváme pod pokličku toho, jak to vlastně funguje a jaké nástroje k tomu používáme.</p>
-                    
-                    <h2>Verzování vs. Bugtracking</h2>
-                    <p>V profesionálním vývoji softwaru se neustále setkáváte se dvěma pojmy, které se rády pletou:</p>
-                    <ul>
-                        <li><strong>Verzovací systém (např. Git):</strong> Nástroj, který sleduje historii změn vašich souborů. Umožňuje "cestování v čase" a týmovou spolupráci bez přepisování práce kolegů.</li>
-                        <li><strong>Bugtracking systém (např. Jira, Trello, GitHub Issues):</strong> Zápisník chyb a úkolů. Zde si tým eviduje věci jako: <em>"Tlačítko na hlavní straně nefunguje"</em> nebo <em>"Přidat sekci kontakty"</em>.</li>
-                    </ul>
-                    
-                    <div class="alert">
-                        Git samotný <strong>NENÍ</strong> bugtrackingový systém. GitHub je platforma, která používá Git pro verzování, ale navíc k němu přidává vlastní bugtracking (záložka Issues) a další nástroje.
-                    </div>
-                </div>
-            </div>
+<div id="presentation">
 
-            <!-- Slide 2 -->
-            <div class="slide">
-                <div class="slide-content">
-                    <h1>2. Proč potřebujeme Git?</h1>
-                    <p>Představte si, že píšete web, ročníkovou práci nebo jakýkoliv větší projekt. Pravděpodobně znáte tento systém zálohování souborů:</p>
-                    <ul>
-                        <li><code>index.html</code></li>
-                        <li><code>index_oprava.html</code></li>
-                        <li><code>index_FINAL.html</code></li>
-                        <li><code>index_FINAL_opravdu_hotovo_3.html</code></li>
-                    </ul>
-                    <p>Tohle je samozřejmě v praxi neudržitelné. Co když s vámi na webu pracuje spolužák? Jak spojíte jeho kód s vaším, aniž byste museli kopírovat řádky textu přes Messenger?</p>
-                    <p><strong>Git tohle všechno řeší.</strong> Soubor máte na disku vždy jen jeden, ale Git si v pozadí pamatuje úplně každou uloženou změnu (verzi), ví <strong>kdo</strong> ji udělal, <strong>kdy</strong> ji udělal a <strong>proč</strong> ji udělal.</p>
-                </div>
-            </div>
-
-            <!-- Slide 3 -->
-            <div class="slide">
-                <div class="slide-content">
-                    <h1>3. Rozdíl mezi Gitem a GitHubem</h1>
-                    <p>Často se tyto dva pojmy zaměňují. Představte si to jako rozdíl mezi motorem v autě a parkovacím domem.</p>
-                    
-                    <h2>Git = Motor (Nástroj)</h2>
-                    <p>Je to program, který běží přímo u vás v počítači. Funguje zcela <strong>offline</strong>. Nemá žádné grafické prostředí na webu, ovládá se většinou přes příkazovou řádku (terminál) nebo přes rozšíření v editoru (např. VS Code). Sám o sobě hlídá změny u vás na disku.</p>
-                    
-                    <h2>GitHub = Parkovací dům (Platforma)</h2>
-                    <p>Je to webová služba (server vlastněný Microsoftem). Můžete tam svůj lokální Git repozitář nahrát (zaparkovat). Díky tomu k němu mají přístup ostatní, je zálohovaný v cloudu a jak jste si zkusili minule, přes GitHub Pages z něj jde rovnou udělat živý web.</p>
-                </div>
-            </div>
-
-            <!-- Slide 4 -->
-            <div class="slide">
-                <div class="slide-content">
-                    <h1>4. Jak Git přemýšlí: 3 Stavy</h1>
-                    <p>Abychom mohli Git používat, musíme pochopit, jak pracuje se soubory. Vaše soubory putují přes tři pomyslné stanice:</p>
-                    
-                    <ol>
-                        <li><strong>Working Directory (Pracovní adresář):</strong> Zde tvoříte a upravujete. Máte otevřený kód, píšete, ukládáte. Git si říká: <em>"Aha, vidím změnu, ale zatím ji neřeším."</em></li>
-                        <li><strong>Staging Area (Přípravna):</strong> Když si myslíte, že je část práce hotová, "přidáte" ji na pódium. Říkáte tím: <em>"Gite, tuhle úpravu si připrav, v další verzi ji chci zapsat."</em></li>
-                        <li><strong>Repository (Historie):</strong> Finální potvrzení (tzv. Commit). Soubory ze Staging Area se trvale zapíší do historie Gitu s vaším popiskem (např. <em>"Změna barvy tlačítka"</em>). Odsud už se dá kdykoliv vracet v čase.</li>
-                    </ol>
-                </div>
-            </div>
-
-            <!-- Slide 5 -->
-            <div class="slide">
-                <div class="slide-content">
-                    <h1>5. Nejdůležitější Git příkazy</h1>
-                    <p>Tyto příkazy se zadávají do terminálu a slouží pro práci na vašem počítači (offline):</p>
-                    
-                    <div class="code-block">
-                        <span class="cmd">git init</span> <br>
-                        <span class="comment"># Zapne Git ve vaší složce. Vytvoří skrytou složku .git a z obyčejné složky je rázem repozitář.</span><br><br>
-                        
-                        <span class="cmd">git status</span> <br>
-                        <span class="comment"># Váš nejlepší kamarád. Vypíše, jaké soubory jsou změněné a v jakém jsou stavu.</span><br><br>
-                        
-                        <span class="cmd">git add</span> <span class="arg">.</span> <br>
-                        <span class="comment"># Přesune VŠECHNY (tečka znamená vše) upravené soubory do Staging Area (přípravny).</span><br><br>
-                        
-                        <span class="cmd">git commit</span> <span class="arg">-m "Oprava barvy nadpisu"</span> <br>
-                        <span class="comment"># Uloží připravené soubory do trvalé historie a přidá k nim vysvětlující vzkaz.</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Slide 6 -->
-            <div class="slide">
-                <div class="slide-content">
-                    <h1>6. Komunikace se světem (GitHub)</h1>
-                    <p>Zatím jsme ukládali historii jen u vás na disku. Pro sdílení světu používáme tyto příkazy:</p>
-                    
-                    <div class="code-block">
-                        <span class="cmd">git push</span> <br>
-                        <span class="comment"># Vezme vaši lokální (počítačovou) historii a "zatlačí" (odešle) ji na vzdálený server (GitHub).</span><br><br>
-                        
-                        <span class="cmd">git pull</span> <br>
-                        <span class="comment"># Pokud kolega udělal změny na GitHubu, vy si je musíte "přitáhnout" k sobě do PC.</span><br><br>
-                        
-                        <span class="cmd">git clone</span> <span class="arg">https://github.com/vase-jmeno/repozitar.git</span> <br>
-                        <span class="comment"># Stáhne celý existující projekt z GitHubu přímo k vám na disk.</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Slide 7 -->
-            <div class="slide">
-                <div class="slide-content">
-                    <h1>7. Bezpečnost a první odeslání</h1>
-                    <p>Možná si říkáte: <em>"Když si může kdokoliv přes <code>git clone</code> naklonovat můj veřejný repozitář, nemůže mi tam někdo cizí přepsat můj kód a všechno mi zničit?"</em></p>
-                    
-                    <h2>Váš kód je v naprostém bezpečí</h2>
-                    <ul>
-                        <li><strong>Čtení je veřejné:</strong> Kdokoliv se může z vašeho kódu učit, stáhnout si ho k sobě a upravovat si ho <strong>u sebe v počítači</strong>.</li>
-                        <li><strong>Zápis je chráněný:</strong> K odeslání změn zpět na GitHub (přes <code>git push</code>) musí mít člověk administrátorská práva – musí být majitelem nebo pozvaným spolupracovníkem.</li>
-                    </ul>
-
-                    <div class="alert warning">
-                        <strong>⚠️ Co se stane v praxi:</strong> Až za chvíli ve VS Code poprvé napíšete <code>git push</code>, terminál vás zastaví. Vyskočí na vás <strong>okno s výzvou k přihlášení</strong>, které vás přesměruje do prohlížeče, abyste potvrdili svá oprávnění. Teprve po úspěšném přihlášení GitHub vaši změnu přijme!
-                    </div>
-                </div>
-            </div>
-
-            <!-- Slide 8 -->
-            <div class="slide">
-                <div class="slide-content">
-                    <h1>8. Samostatné cvičení</h1>
-            
-                    
-                    <h2>Váš dnešní úkol:</h2>
-                    <ol>
-                        <li>Otevřete si na počítači terminál (nebo terminál přímo ve VS Code).</li>
-                        <li>Stáhněte si svůj minulý web z GitHubu do PC příkazem:<br> 
-                            <span class="highlight">git clone https://github.com/vase-jmeno/nazev-repozitare.git</span><br>
-                            <span style="display: block; margin-top: 10px; font-size: 0.95em; color: #d9381e;"><strong>⚠️ POZOR:</strong> Musíte použít adresu repozitáře (obsahuje github.com), nikoliv adresu vašeho hotového webu (která končí na github.io). Jinak vám terminál ohlásí chybu <em>"fatal: repository not found"</em>!</span>
-                        </li>
-                        <li>Otevřete staženou složku ve VS Code a proveďte viditelnou změnu ve vašem <code>index.html</code> nebo CSS.</li>
-                        <li>Otevřete terminál ve VS Code (musíte být uvnitř složky!) a připravte soubory: <span class="highlight">git add .</span></li>
-                        <li>Uložte změnu do historie: <span class="highlight">git commit -m "Aktualizace webu z lokálu"</span></li>
-                        <li>Odešlete to na GitHub: <span class="highlight">git push</span> (Zde na vás pravděpodobně vyskočí vysvětlované přihlašovací okno).</li>
-                        <li>Zkontrolujte svůj veřejný GitHub Pages web. Za pár minut by se měla úprava projevit.</li>
-                    </ol>
-                </div>
-            </div>
-
-        </div>
+  <!-- ════════════════════════════════════════════════════════════════
+       SLIDE 1 – Titulní
+       ════════════════════════════════════════════════════════════════ -->
+  <section class="slide active" id="slide-1">
+    <div class="octocat">
+      <svg width="96" height="96" viewBox="0 0 98 96" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" clip-rule="evenodd"
+          d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69
+             3.9.571 5.306-1.686 5.306-3.72 0-1.839-.07-7.961-.1-14.395
+             -18.013 3.903-21.81-8.7-21.81-8.7-2.946-7.479-7.19-9.473-7.19-9.473
+             -5.88-4.016.44-3.935.44-3.935 6.501.459 9.921 6.68 9.921 6.68
+             5.777 9.906 15.156 7.044 18.853 5.385.582-4.183 2.26-7.045 4.111-8.667
+             -14.383-1.636-29.5-7.19-29.5-32.006 0-7.072 2.524-12.856 6.675-17.389
+             -.671-1.636-2.891-8.226.635-17.148 0 0 5.44-1.741 17.818 6.647
+             5.166-1.435 10.696-2.154 16.196-2.178 5.5.024 11.03.743 16.196 2.178
+             12.378-8.388 17.813-6.647 17.813-6.647 3.53 8.922 1.31 15.512.638 17.148
+             4.153 4.533 6.67 10.317 6.67 17.389 0 24.876-15.136 30.357-29.556 31.96
+             2.326 2.008 4.394 5.952 4.394 12 0 8.667-.08 15.658-.08 17.781
+             0 2.039 1.4 4.316 5.35 3.591C83.98 89.352 98 70.949 98 49.217
+             98 22 75.998 0 48.854 0z"
+          fill="var(--text)"/>
+      </svg>
     </div>
-
-    <!-- Ovládací prvky -->
-    <div class="controls">
-        <button id="prevBtn" onclick="changeSlide(-1)">
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-            Předchozí
-        </button>
-        <div class="counter" id="counter">1 / 8</div>
-        <button id="nextBtn" onclick="changeSlide(1)">
-            Další
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-        </button>
+    <div class="slide-title">GitHub pro nováčky <span class="highlight">🚀</span></div>
+    <div class="slide-subtitle">Kompletní průvodce od nuly — Git, GitHub a vše kolem</div>
+    <div class="slide-body" style="color:var(--muted); font-size:1.2rem;">
+      Naviguj šipkami <kbd>←</kbd> <kbd>→</kbd> nebo tlačítky dole<br/>
+      <span style="color:var(--green); font-weight:600;">14 snímků</span> • Základní pojmy • Příkazy • Workflow • Pull requesty
     </div>
+  </section>
 
-    <script>
-        let currentSlide = 0;
-        const slides = document.querySelectorAll('.slide');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const counter = document.getElementById('counter');
-        const progressBar = document.getElementById('progressBar');
+  <!-- ════════════════════════════════════════════════════════════════
+       SLIDE 2 – Co je Git?
+       ════════════════════════════════════════════════════════════════ -->
+  <section class="slide" id="slide-2">
+    <div class="slide-title">Co je <span class="green">Git</span>?</div>
+    <div class="slide-subtitle">Systém pro správu verzí (Version Control System)</div>
+    <div class="cards">
+      <div class="card">
+        <h3>📸 Snímky kódu</h3>
+        <p>Git si průběžně ukládá <span class="highlight">fotografie</span> tvého projektu. Kdykoli se vrátíš do libovolného bodu v historii.</p>
+      </div>
+      <div class="card">
+        <h3>🕒 Časová osa</h3>
+        <p>Každá změna má autora, datum a popis. Vždy víš, <span class="green">kdo, kdy a proč</span> něco změnil.</p>
+      </div>
+      <div class="card">
+        <h3>🌿 Větve</h3>
+        <p>Pracuj na nových funkcích odděleně, aniž by rozbíjely hlavní kód. Větve jsou v Gitu levné a rychlé.</p>
+      </div>
+      <div class="card">
+        <h3>🤝 Spolupráce</h3>
+        <p>Více vývojářů může pracovat na jednom projektu <span class="orange">současně</span> bez konfliktů.</p>
+      </div>
+    </div>
+    <div class="slide-body" style="margin-top:1.2em; color:var(--muted);">
+      Git běží <strong style="color:var(--text);">lokálně na tvém počítači</strong> — nepotřebuje internet.
+    </div>
+  </section>
 
-        // JS kód automaticky spočítá, že je nyní 8 slajdů
-        function updateSlider() {
-            // Remove active class from all
-            slides.forEach(slide => {
-                slide.classList.remove('active');
-            });
-            
-            // Add active class to current
-            slides[currentSlide].classList.add('active');
-            
-            // Update texts and buttons
-            counter.innerText = `${currentSlide + 1} / ${slides.length}`;
-            prevBtn.disabled = currentSlide === 0;
-            
-            if (currentSlide === slides.length - 1) {
-                nextBtn.innerHTML = `Dokončit <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
-            } else {
-                nextBtn.innerHTML = `Další <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>`;
-            }
+  <!-- ════════════════════════════════════════════════════════════════
+       SLIDE 3 – Co je GitHub?
+       ════════════════════════════════════════════════════════════════ -->
+  <section class="slide" id="slide-3">
+    <div class="slide-title">Co je <span class="highlight">GitHub</span>?</div>
+    <div class="slide-subtitle">Cloudové místo pro tvé Git repozitáře</div>
+    <div class="two-col" style="max-width:920px;">
+      <div>
+        <div class="code-block">
+          <span class="code-comment"># Git (lokálně)</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git</span> <span class="code-arg">init</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git</span> <span class="code-arg">commit</span><br/>
+          <br/>
+          <span class="code-comment"># Na tvém PC 💻</span>
+        </div>
+        <p style="font-size:1.15rem; color:var(--muted); margin-top:.8em; line-height:1.7;">
+          Git je <span style="color:var(--text);">nástroj</span> nainstalovaný na počítači. Pracuje offline, ukládá historii lokálně.
+        </p>
+      </div>
+      <div>
+        <div class="code-block">
+          <span class="code-comment"># GitHub (cloud)</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git</span> <span class="code-arg">push</span> <span class="code-flag">origin main</span><br/>
+          <br/>
+          <span class="code-comment"># Na internetu 🌐</span>
+        </div>
+        <p style="font-size:1.15rem; color:var(--muted); margin-top:.8em; line-height:1.7;">
+          GitHub je <span style="color:var(--text);">platforma</span> kde sdílíš kód, spolupracuješ s ostatními a hostíš projekty.
+        </p>
+      </div>
+    </div>
+    <div style="margin-top:1.2em;">
+      <span class="pill pill-blue">Záloha kódu</span>
+      <span class="pill pill-green">Spolupráce</span>
+      <span class="pill pill-purple">Open Source</span>
+      <span class="pill pill-orange">Portfolio</span>
+    </div>
+  </section>
 
-            // Update progress bar
-            const progressPercentage = ((currentSlide) / (slides.length - 1)) * 100;
-            progressBar.style.width = `${progressPercentage}%`;
-        }
+  <!-- ════════════════════════════════════════════════════════════════
+       SLIDE 4 – git init
+       ════════════════════════════════════════════════════════════════ -->
+  <section class="slide" id="slide-4">
+    <div class="slide-title"><span class="green">git init</span></div>
+    <div class="slide-subtitle">Začínáme — vytvoříme Git repozitář</div>
+    <div class="code-block">
+      <span class="code-comment"># 1. Vytvoř složku projektu a vstup do ní</span><br/>
+      <span class="dollar">$</span> <span class="code-cmd">mkdir</span> <span class="code-arg">muj-projekt</span><br/>
+      <span class="dollar">$</span> <span class="code-cmd">cd</span> <span class="code-arg">muj-projekt</span><br/>
+      <br/>
+      <span class="code-comment"># 2. Inicializuj Git repozitář</span><br/>
+      <span class="dollar">$</span> <span class="code-cmd">git init</span><br/>
+      <br/>
+      <span class="code-comment"># Výstup:</span><br/>
+      <span style="color:var(--green);">Initialized empty Git repository in .git/</span>
+    </div>
+    <div class="steps" style="margin-top:.6em;">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div><strong>Vytvoří se skrytá složka <span class="highlight">.git/</span></strong> — tady Git ukládá celou historii projektu. Nikdy ji ručně nemaž!</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>Složka se stane <strong>lokálním repozitářem</strong> — Git od teď sleduje všechny změny souborů.</div>
+      </div>
+    </div>
+  </section>
 
-        function changeSlide(direction) {
-            if (currentSlide === slides.length - 1 && direction === 1) {
-                return;
-            }
-            
-            currentSlide += direction;
-            if (currentSlide < 0) currentSlide = 0;
-            if (currentSlide >= slides.length) currentSlide = slides.length - 1;
-            
-            updateSlider();
-        }
+  <!-- ════════════════════════════════════════════════════════════════
+       SLIDE 5 – git add & git commit
+       ════════════════════════════════════════════════════════════════ -->
+  <section class="slide" id="slide-5">
+    <div class="slide-title"><span class="green">git add</span> &amp; <span class="highlight">git commit</span></div>
+    <div class="slide-subtitle">Jak ukládáme změny do historie</div>
+    <div class="code-block">
+      <span class="code-comment"># Přidej konkrétní soubor do "staging area"</span><br/>
+      <span class="dollar">$</span> <span class="code-cmd">git add</span> <span class="code-arg">index.html</span><br/>
+      <br/>
+      <span class="code-comment"># Nebo přidej VŠECHNY změněné soubory najednou</span><br/>
+      <span class="dollar">$</span> <span class="code-cmd">git add</span> <span class="code-flag">.</span><br/>
+      <br/>
+      <span class="code-comment"># Potvrď změny s popisem (commit)</span><br/>
+      <span class="dollar">$</span> <span class="code-cmd">git commit</span> <span class="code-flag">-m</span> <span class="code-string">"Přidána navigace na homepage"</span>
+    </div>
+    <div class="cards" style="margin-top:.6em; max-width:860px;">
+      <div class="card">
+        <h3>📦 git add</h3>
+        <p>Přesuneš soubory do <span class="orange">staging area</span> — jako balíček připravený k odeslání. Git je ještě NEULOŽIL do historie.</p>
+      </div>
+      <div class="card">
+        <h3>💾 git commit</h3>
+        <p>Teprve commit <span class="green">uloží snapshot</span> do trvalé historie. Vždy piš výstižnou zprávu — tvé budoucí já ti poděkuje!</p>
+      </div>
+    </div>
+  </section>
 
-        // Keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight' || e.key === 'Space') {
-                if(currentSlide < slides.length - 1) changeSlide(1);
-            } else if (e.key === 'ArrowLeft') {
-                if(currentSlide > 0) changeSlide(-1);
-            }
-        });
+  <!-- ════════════════════════════════════════════════════════════════
+       SLIDE 6 – git status & git log
+       ════════════════════════════════════════════════════════════════ -->
+  <section class="slide" id="slide-6">
+    <div class="slide-title"><span class="purple">git status</span> &amp; <span class="orange">git log</span></div>
+    <div class="slide-subtitle">Co se děje v mém repozitáři?</div>
+    <div class="two-col">
+      <div>
+        <div class="code-block" style="font-size:1.05rem;">
+          <span class="dollar">$</span> <span class="code-cmd">git status</span><br/>
+          <br/>
+          <span class="code-comment">On branch main</span><br/>
+          <span class="code-comment">Changes not staged:</span><br/>
+          <span style="color:var(--red);">  modified:  index.html</span><br/>
+          <br/>
+          <span class="code-comment">Untracked files:</span><br/>
+          <span style="color:var(--red);">  style.css</span><br/>
+          <br/>
+          <span class="code-comment">nothing added to commit</span>
+        </div>
+        <p style="font-size:1.1rem; color:var(--muted); margin-top:.8em; line-height:1.7;">
+          Zobrazí, které soubory jsou <span style="color:var(--red);">změněné</span>, <span style="color:var(--green);">ve staging</span> nebo <span style="color:var(--orange);">nové</span>.
+        </p>
+      </div>
+      <div>
+        <div class="code-block" style="font-size:1.05rem;">
+          <span class="dollar">$</span> <span class="code-cmd">git log</span> <span class="code-flag">--oneline</span><br/>
+          <br/>
+          <span style="color:var(--orange);">a3f2c1b</span> <span>Oprava chyby v login formuláři</span><br/>
+          <span style="color:var(--orange);">9d8e7f6</span> <span>Přidán dark mode</span><br/>
+          <span style="color:var(--orange);">2b1a0c9</span> <span>Inicializace projektu</span>
+        </div>
+        <p style="font-size:1.1rem; color:var(--muted); margin-top:.8em; line-height:1.7;">
+          Vypíše historii commitů. Každý má unikátní <span style="color:var(--orange);">hash ID</span> a zprávu.
+        </p>
+      </div>
+    </div>
+  </section>
 
-        // Initialize
-        updateSlider();
-    </script>
+  <!-- ════════════════════════════════════════════════════════════════
+       SLIDE 7 – git push & git pull & git clone
+       ════════════════════════════════════════════════════════════════ -->
+  <section class="slide" id="slide-7">
+    <div class="slide-title"><span class="highlight">push</span> · <span class="green">pull</span> · <span class="purple">clone</span></div>
+    <div class="slide-subtitle">Komunikace s GitHubem</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num" style="background:var(--purple); min-width:36px;">⬇</div>
+        <div>
+          <strong class="purple">git clone</strong> &nbsp;— stáhni celý repozitář z GitHubu poprvé<br/>
+          <span style="color:var(--muted); font-size:.95em;">
+            <span class="dollar">$</span> git clone https://github.com/uzivatel/repozitar.git
+          </span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:var(--blue-dark); min-width:36px;">⬆</div>
+        <div>
+          <strong class="highlight">git push</strong> &nbsp;— nahraj lokální commity na GitHub<br/>
+          <span style="color:var(--muted); font-size:.95em;">
+            <span class="dollar">$</span> git push origin main
+          </span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:var(--green-dim); min-width:36px;">🔄</div>
+        <div>
+          <strong class="green">git pull</strong> &nbsp;— stáhni nejnovější změny od ostatních<br/>
+          <span style="color:var(--muted); font-size:.95em;">
+            <span class="dollar">$</span> git pull origin main
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="slide-body" style="margin-top:1.1em; color:var(--muted); font-size:1.1rem;">
+      Zlaté pravidlo: <strong style="color:var(--text);">vždy začínaj den s <span class="green">git pull</span></strong> — budeš mít nejnovější verzi kódu!
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       SLIDE 8 – Větve (Branches)
+       ════════════════════════════════════════════════════════════════ -->
+  <section class="slide" id="slide-8">
+    <div class="slide-title">🌿 Větve <span style="color:var(--muted); font-size:.65em;">(Branches)</span></div>
+    <div class="slide-subtitle">Pracuj na funkci bez narušení hlavního kódu</div>
+    <div class="code-block">
+      <span class="code-comment"># Zobraz větve</span><br/>
+      <span class="dollar">$</span> <span class="code-cmd">git branch</span><br/>
+      <span style="color:var(--green);">* main</span><br/>
+      <br/>
+      <span class="code-comment"># Vytvoř novou větev a přepni se do ní</span><br/>
+      <span class="dollar">$</span> <span class="code-cmd">git checkout</span> <span class="code-flag">-b</span> <span class="code-arg">feature/nova-funkce</span><br/>
+      <br/>
+      <span class="code-comment"># (modernější způsob)</span><br/>
+      <span class="dollar">$</span> <span class="code-cmd">git switch</span> <span class="code-flag">-c</span> <span class="code-arg">feature/nova-funkce</span><br/>
+      <br/>
+      <span class="code-comment"># Přepnutí zpět na main</span><br/>
+      <span class="dollar">$</span> <span class="code-cmd">git switch main</span>
+    </div>
+    <div class="cards" style="margin-top:.6em; max-width:860px;">
+      <div class="card">
+        <h3>🛡️ main</h3>
+        <p>Hlavní větev — vždy by měla obsahovat <span class="green">funkční kód</span>. Nikdy tam commituj přímo!</p>
+      </div>
+      <div class="card">
+        <h3>🔨 feature/...</h3>
+        <p>Nová funkce = nová větev. Konvence pojmenování: <span class="highlight">feature/popis</span>, <span class="orange">fix/chyba</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       SLIDE 9 – Každodenní workflow
+       ════════════════════════════════════════════════════════════════ -->
+  <section class="slide" id="slide-9">
+    <div class="slide-title">📅 Každodenní workflow</div>
+    <div class="slide-subtitle">Jak vypadá typický pracovní den s Gitem</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div><span class="green">git pull</span> &nbsp;— Stáhni nejnovější změny od kolegů</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div><span class="highlight">git switch -c feature/nova-vec</span> &nbsp;— Vytvoř vlastní větev</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>✍️ Pracuj na kódu... píši, ladím, testuji</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div><span class="green">git add .</span> &nbsp;+ &nbsp;<span class="highlight">git commit -m "..."</span> &nbsp;— Ulož průběžné změny</div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div><span class="purple">git push origin feature/nova-vec</span> &nbsp;— Nahraj na GitHub</div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div>🔀 Otevři <span class="orange">Pull Request</span> na GitHubu a požádej o code review</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       SLIDE 10 – git merge & konflikty
+       ════════════════════════════════════════════════════════════════ -->
+  <section class="slide" id="slide-10">
+    <div class="slide-title">🔀 Merge &amp; <span class="red">Konflikty</span></div>
+    <div class="slide-subtitle">Spojování větví dohromady</div>
+    <div class="code-block">
+      <span class="code-comment"># Přepni se na main a slij do ní svou větev</span><br/>
+      <span class="dollar">$</span> <span class="code-cmd">git switch</span> <span class="code-arg">main</span><br/>
+      <span class="dollar">$</span> <span class="code-cmd">git merge</span> <span class="code-arg">feature/nova-funkce</span><br/>
+      <br/>
+      <span class="code-comment"># Pokud nastane konflikt — Git ti řekne:</span><br/>
+      <span style="color:var(--red);">CONFLICT (content): Merge conflict in index.html</span><br/>
+      <br/>
+      <span class="code-comment"># Otevři soubor, vyřeš konflikt, pak:</span><br/>
+      <span class="dollar">$</span> <span class="code-cmd">git add</span> <span class="code-arg">index.html</span><br/>
+      <span class="dollar">$</span> <span class="code-cmd">git commit</span> <span class="code-flag">-m</span> <span class="code-string">"Vyřešen konflikt merge"</span>
+    </div>
+    <div class="slide-body" style="margin-top:.9em; font-size:1.15rem;">
+      Konflikt nastane, když <span class="red">dva lidé změní stejný řádek</span>. Git to označí v souboru —
+      ty se rozhodneš, <span class="highlight">která verze zůstane</span>. Je to normální a zvládneš to! 💪
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       SLIDE 11 – Pull Requesty
+       ════════════════════════════════════════════════════════════════ -->
+  <section class="slide" id="slide-11">
+    <div class="slide-title">🔄 Pull Requesty <span style="color:var(--muted); font-size:.6em;">(PR)</span></div>
+    <div class="slide-subtitle">Žádost o splynutí tvého kódu do hlavní větve</div>
+    <div class="flow">
+      <div class="flow-step">
+        <div style="font-size:1.5rem;">🌿</div>
+        <strong class="green">Feature větev</strong><br/>
+        <small style="color:var(--muted);">Napíšeš kód</small>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div style="font-size:1.5rem;">⬆️</div>
+        <strong class="highlight">Push</strong><br/>
+        <small style="color:var(--muted);">Na GitHub</small>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div style="font-size:1.5rem;">📋</div>
+        <strong class="orange">PR otevřen</strong><br/>
+        <small style="color:var(--muted);">Popis změn</small>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div style="font-size:1.5rem;">👀</div>
+        <strong class="purple">Code Review</strong><br/>
+        <small style="color:var(--muted);">Kolegové komentují</small>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div style="font-size:1.5rem;">✅</div>
+        <strong class="green">Merge!</strong><br/>
+        <small style="color:var(--muted);">Kód je v main</small>
+      </div>
+    </div>
+    <div class="cards" style="max-width:860px;">
+      <div class="card">
+        <h3>💬 Code Review</h3>
+        <p>Kolegové vidí přesně <span class="highlight">co ses změnil</span>, komentují řádky, navrhují úpravy. Učíš se a učíš ostatní.</p>
+      </div>
+      <div class="card">
+        <h3>🔒 Ochrana main</h3>
+        <p>Dobré týmy vyžadují <span class="green">schválení PR</span> před mergem. Nikdo nepokazí hlavní kód náhodou.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       SLIDE 12 – Kontribuce & Issues
+       ════════════════════════════════════════════════════════════════ -->
+  <section class="slide" id="slide-12">
+    <div class="slide-title">🌍 Kontribuce &amp; <span class="orange">Issues</span></div>
+    <div class="slide-subtitle">Jak přispívat do open source projektů</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num" style="background:var(--orange); color:#000;">1</div>
+        <div>
+          <strong class="orange">Fork</strong> — Udělej si vlastní kopii repozitáře cizího projektu na svůj GitHub účet
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <span class="green">git clone</span> — Stáhni svůj fork lokálně a pracuj na změně
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          Oprav chybu / přidej funkci → <span class="highlight">commit + push</span> do svého forku
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:var(--purple);">4</div>
+        <div>
+          Otevři <strong class="purple">Pull Request</strong> do originálního projektu — autoři rozhodnou, zda kód přijmou
+        </div>
+      </div>
+    </div>
+    <div class="slide-body" style="margin-top:.9em; font-size:1.1rem; color:var(--muted);">
+      <strong class="orange">Issues</strong> = tikety s chybami nebo nápady. Najdeš je na každém repozitáři.
+      Hledej štítek <span class="pill pill-green" style="font-size:.85rem;">good first issue</span> — ty jsou pro nováčky! 🎯
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       SLIDE 13 – GitHub Pages
+       ════════════════════════════════════════════════════════════════ -->
+  <section class="slide" id="slide-13">
+    <div class="slide-title">🌐 GitHub Pages</div>
+    <div class="slide-subtitle">Zdarma hostuj webové stránky přímo z repozitáře</div>
+    <div class="steps" style="max-width:820px;">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>Vytvoř repozitář s názvem <span class="highlight">uzivatelske-jmeno.github.io</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>Nahraj soubory HTML/CSS/JS a udělej <span class="green">git push</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>V Settings → Pages zvol zdroj (větev <span class="orange">main</span>, složka <span class="orange">/root</span>)</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div>Za chvíli běží web na <span class="highlight">https://uzivatelske-jmeno.github.io</span> 🎉</div>
+      </div>
+    </div>
+    <div class="slide-body" style="margin-top:.9em; font-size:1.1rem; color:var(--muted);">
+      Skvělé pro <strong style="color:var(--text);">portfolio</strong>, projektové dokumentace nebo jednoduché weby.
+      Zdarma, bez serveru, bez složité konfigurace.
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       SLIDE 14 – Cheat Sheet
+       ════════════════════════════════════════════════════════════════ -->
+  <section class="slide" id="slide-14">
+    <div class="slide-title">📋 Cheat Sheet</div>
+    <div class="slide-subtitle">Nejdůležitější příkazy na jednom místě</div>
+    <div class="two-col" style="max-width:980px; font-size:clamp(.95rem, 1.4vw, 1.2rem);">
+      <div>
+        <div class="code-block" style="font-size:clamp(.9rem,1.3vw,1.1rem);">
+          <span class="code-comment"># Nastavení identity</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git config</span> <span class="code-flag">--global</span> user.name <span class="code-string">"Jméno"</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git config</span> <span class="code-flag">--global</span> user.email <span class="code-string">"mail@..."</span><br/>
+          <br/>
+          <span class="code-comment"># Základní flow</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git init</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git add .</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git commit</span> <span class="code-flag">-m</span> <span class="code-string">"zpráva"</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git push origin main</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git pull origin main</span>
+        </div>
+      </div>
+      <div>
+        <div class="code-block" style="font-size:clamp(.9rem,1.3vw,1.1rem);">
+          <span class="code-comment"># Větve</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git switch</span> <span class="code-flag">-c</span> <span class="code-arg">vetev</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git switch main</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git merge</span> <span class="code-arg">vetev</span><br/>
+          <br/>
+          <span class="code-comment"># Informace</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git status</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git log</span> <span class="code-flag">--oneline</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git diff</span><br/>
+          <span class="dollar">$</span> <span class="code-cmd">git clone</span> <span class="code-string">[url]</span>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:1em; text-align:center; font-size:1.15rem; color:var(--muted);">
+      Gratulujeme! 🎉 Teď znáš základy Gitu a GitHubu. Nejlepší způsob jak se to naučit je
+      <span style="color:var(--green); font-weight:600;">jednoduše začít používat!</span>
+    </div>
+  </section>
+
+</div><!-- /presentation -->
+
+<!-- Navigation -->
+<div id="nav">
+  <button id="btn-prev">← Zpět</button>
+  <div id="dots"></div>
+  <span id="slide-counter"></span>
+  <button id="btn-next">Další →</button>
+</div>
+
+<script>
+  (function () {
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const total  = slides.length;
+    let   current = 0;
+    let   isAnimating = false;
+
+    const counter = document.getElementById('slide-counter');
+    const badge   = document.getElementById('slide-badge');
+    const dotsEl  = document.getElementById('dots');
+
+    // Build dots
+    slides.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i === 0 ? ' active' : '');
+      d.addEventListener('click', () => goTo(i));
+      dotsEl.appendChild(d);
+    });
+
+    function updateUI() {
+      counter.textContent = `${current + 1} / ${total}`;
+      badge.textContent   = `${current + 1} / ${total}`;
+      document.querySelectorAll('.dot').forEach((d, i) =>
+        d.classList.toggle('active', i === current)
+      );
+    }
+
+    function goTo(target) {
+      if (isAnimating || target === current) return;
+      isAnimating = true;
+
+      const prev = slides[current];
+      const next = slides[target];
+
+      prev.classList.add('exit');
+      next.classList.add('active');
+
+      setTimeout(() => {
+        prev.classList.remove('active', 'exit');
+        current = target;
+        isAnimating = false;
+        updateUI();
+      }, 450);
+    }
+
+    function nextSlide() { if (current < total - 1) goTo(current + 1); }
+    function prevSlide() { if (current > 0)          goTo(current - 1); }
+
+    document.getElementById('btn-next').addEventListener('click', nextSlide);
+    document.getElementById('btn-prev').addEventListener('click', prevSlide);
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  nextSlide();
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')    prevSlide();
+    });
+
+    // Touch / swipe support
+    let touchStartX = 0;
+    document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    document.addEventListener('touchend',   e => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 50) { dx < 0 ? nextSlide() : prevSlide(); }
+    });
+
+    updateUI();
+  })();
+</script>
+
 </body>
 </html>
