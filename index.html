@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verzovací systémy: Úvod do Gitu</title>
+    <style>
+        :root {
+            --primary-color: #f05032; /* Git oranžovo-červená */
+            --bg-color: #f3f4f6;
+            --text-color: #1f2937;
+            --slide-bg: #ffffff;
+            --code-bg: #1e1e1e;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .presentation-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Progress Bar */
+        .progress-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background-color: #e5e7eb;
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s ease-out;
+        }
+
+        /* Slides */
+        .slides-wrapper {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 60px 10%;
+            box-sizing: border-box;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease-in-out, visibility 0.4s ease-in-out;
+            overflow-y: auto;
+            background: var(--slide-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .slide-content {
+            max-width: 900px;
+            width: 100%;
+            padding-bottom: 100px; /* Space for controls */
+        }
+
+        /* Typography & Elements */
+        h1 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 3px solid #fca5a5;
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+
+        h2 {
+            color: #374151;
+            font-size: 1.8rem;
+            margin-top: 2rem;
+        }
+
+        p, li {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: #4b5563;
+        }
+
+        ul, ol {
+            margin-bottom: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.8rem;
+        }
+
+        strong {
+            color: #111827;
+        }
+
+        .highlight {
+            background-color: #fef08a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #854d0e;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background-color: var(--code-bg);
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 12px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1.1rem;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        .code-block .cmd { color: #569cd6; font-weight: bold; }
+        .code-block .arg { color: #ce9178; }
+        .code-block .comment { color: #6a9955; font-style: italic; }
+
+        /* Alert Box */
+        .alert {
+            background-color: #eff6ff;
+            border-left: 6px solid #3b82f6;
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 30px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Controls */
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px;
+            border-radius: 50px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #d9381e;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #d1d5db;
+            cursor: not-allowed;
+            color: #9ca3af;
+        }
+
+        .counter {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #4b5563;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            p, li { font-size: 1.1rem; }
+            .slide { padding: 40px 5%; }
+            .controls { bottom: 15px; padding: 10px 20px; width: 90%; justify-content: space-between;}
+            button { padding: 10px 16px; font-size: 0.9rem;}
+        }
+    </style>
+</head>
+<body>
+
+    <div class="presentation-container">
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="slides-wrapper">
+            
+            <!-- Slide 1 -->
+            <div class="slide active">
+                <div class="slide-content">
+                    <h1>1. Co to vlastně řešíme?</h1>
+                    <p>Vítejte u dnešní online lekce! Minule jste si založili GitHub a nahráli tam svůj web. Dnes se podíváme pod pokličku toho, jak to vlastně funguje a jaké nástroje k tomu používáme.</p>
+                    
+                    <h2>Verzování vs. Bugtracking</h2>
+                    <p>V profesionálním vývoji softwaru se neustále setkáváte se dvěma pojmy, které se rády pletou:</p>
+                    <ul>
+                        <li><strong>Verzovací systém (např. Git):</strong> Nástroj, který sleduje historii změn vašich souborů. Umožňuje "cestování v čase" a týmovou spolupráci bez přepisování práce kolegů.</li>
+                        <li><strong>Bugtracking systém (např. Jira, Trello, GitHub Issues):</strong> Zápisník chyb a úkolů. Zde si tým eviduje věci jako: <em>"Tlačítko na hlavní straně nefunguje"</em> nebo <em>"Přidat sekci kontakty"</em>.</li>
+                    </ul>
+                    
+                    <div class="alert">
+                        <strong>💡 Častý omyl:</strong> Git samotný <strong>NENÍ</strong> bugtrackingový systém. GitHub je platforma, která používá Git pro verzování, ale navíc k němu přidává vlastní bugtracking (záložka Issues) a další nástroje.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="slide">
+                <div class="slide-content">
+                    <h1>2. Proč potřebujeme Git?</h1>
+                    <p>Představte si, že píšete web, ročníkovou práci nebo jakýkoliv větší projekt. Pravděpodobně znáte tento systém zálohování souborů:</p>
+                    <ul>
+                        <li><code>index.html</code></li>
+                        <li><code>index_oprava.html</code></li>
+                        <li><code>index_FINAL.html</code></li>
+                        <li><code>index_FINAL_opravdu_hotovo_3.html</code></li>
+                    </ul>
+                    <p>Tohle je samozřejmě v praxi neudržitelné. Co když s vámi na webu pracuje spolužák? Jak spojíte jeho kód s vaším, aniž byste museli kopírovat řádky textu přes Messenger?</p>
+                    <p><strong>Git tohle všechno řeší.</strong> Soubor máte na disku vždy jen jeden, ale Git si v pozadí pamatuje úplně každou uloženou změnu (verzi), ví <strong>kdo</strong> ji udělal, <strong>kdy</strong> ji udělal a <strong>proč</strong> ji udělal.</p>
+                </div>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="slide">
+                <div class="slide-content">
+                    <h1>3. Rozdíl mezi Gitem a GitHubem</h1>
+                    <p>Často se tyto dva pojmy zaměňují. Představte si to jako rozdíl mezi motorem v autě a parkovacím domem.</p>
+                    
+                    <h2>Git = Motor (Nástroj)</h2>
+                    <p>Je to program, který běží přímo u vás v počítači. Funguje zcela <strong>offline</strong>. Nemá žádné grafické prostředí na webu, ovládá se většinou přes příkazovou řádku (terminál) nebo přes rozšíření v editoru (např. VS Code). Sám o sobě hlídá změny u vás na disku.</p>
+                    
+                    <h2>GitHub = Parkovací dům (Platforma)</h2>
+                    <p>Je to webová služba (server vlastněný Microsoftem). Můžete tam svůj lokální Git repozitář nahrát (zaparkovat). Díky tomu k němu mají přístup ostatní, je zálohovaný v cloudu a jak jste si zkusili minule, přes GitHub Pages z něj jde rovnou udělat živý web.</p>
+                </div>
+            </div>
+
+            <!-- Slide 4 -->
+            <div class="slide">
+                <div class="slide-content">
+                    <h1>4. Jak Git přemýšlí: 3 Stavy</h1>
+                    <p>Abychom mohli Git používat, musíme pochopit, jak pracuje se soubory. Vaše soubory putují přes tři pomyslné stanice:</p>
+                    
+                    <ol>
+                        <li><strong>Working Directory (Pracovní adresář):</strong> Zde tvoříte a upravujete. Máte otevřený kód, píšete, ukládáte. Git si říká: <em>"Aha, vidím změnu, ale zatím ji neřeším."</em></li>
+                        <li><strong>Staging Area (Přípravna):</strong> Když si myslíte, že je část práce hotová, "přidáte" ji na pódium. Říkáte tím: <em>"Gite, tuhle úpravu si připrav, v další verzi ji chci zapsat."</em></li>
+                        <li><strong>Repository (Historie):</strong> Finální potvrzení (tzv. Commit). Soubory ze Staging Area se trvale zapíší do historie Gitu s vaším popiskem (např. <em>"Změna barvy tlačítka"</em>). Odsud už se dá kdykoliv vracet v čase.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Slide 5 -->
+            <div class="slide">
+                <div class="slide-content">
+                    <h1>5. Nejdůležitější Git příkazy</h1>
+                    <p>Tyto příkazy se zadávají do terminálu a slouží pro práci na vašem počítači (offline):</p>
+                    
+                    <div class="code-block">
+                        <span class="cmd">git init</span> <br>
+                        <span class="comment"># Zapne Git ve vaší složce. Vytvoří skrytou složku .git a z obyčejné složky je rázem repozitář.</span><br><br>
+                        
+                        <span class="cmd">git status</span> <br>
+                        <span class="comment"># Váš nejlepší kamarád. Vypíše, jaké soubory jsou změněné a v jakém jsou stavu.</span><br><br>
+                        
+                        <span class="cmd">git add</span> <span class="arg">.</span> <br>
+                        <span class="comment"># Přesune VŠECHNY (tečka znamená vše) upravené soubory do Staging Area (přípravny).</span><br><br>
+                        
+                        <span class="cmd">git commit</span> <span class="arg">-m "Oprava barvy nadpisu"</span> <br>
+                        <span class="comment"># Uloží připravené soubory do trvalé historie a přidá k nim vysvětlující vzkaz.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 6 -->
+            <div class="slide">
+                <div class="slide-content">
+                    <h1>6. Komunikace se světem (GitHub)</h1>
+                    <p>Zatím jsme ukládali historii jen u vás na disku. Pro sdílení světu používáme tyto příkazy:</p>
+                    
+                    <div class="code-block">
+                        <span class="cmd">git push</span> <br>
+                        <span class="comment"># Vezme vaši lokální (počítačovou) historii a "zatlačí" (odešle) ji na vzdálený server (GitHub).</span><br><br>
+                        
+                        <span class="cmd">git pull</span> <br>
+                        <span class="comment"># Pokud kolega udělal změny na GitHubu, vy si je musíte "přitáhnout" k sobě do PC.</span><br><br>
+                        
+                        <span class="cmd">git clone</span> <span class="arg">https://github.com/vase-jmeno/repozitar.git</span> <br>
+                        <span class="comment"># Stáhne celý existující projekt z GitHubu přímo k vám na disk.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 7 -->
+            <div class="slide">
+                <div class="slide-content">
+                    <h1>7. Samostatné cvičení</h1>
+                    <p>Vzhledem k mé nepřítomnosti máte na dnešní hodinu samostatný praktický úkol. Budete navazovat na minulou hodinu.</p>
+                    
+                    <h2>Váš dnešní úkol:</h2>
+                    <ol>
+                        <li>Otevřete si na počítači terminál (nebo terminál přímo ve VS Code).</li>
+                        <li>Stáhněte si svůj minulý web z GitHubu do PC příkazem:<br> <span class="highlight">git clone https://repozitar.cz/</span></li>
+                        <li>Otevřete staženou složku ve VS Code a proveďte viditelnou změnu ve vašem <code>index.html</code> nebo CSS.</li>
+                        <li>Otevřete terminál ve VS Code (musíte být uvnitř složky!) a připravte soubory: <span class="highlight">git add .</span></li>
+                        <li>Uložte změnu do historie: <span class="highlight">git commit -m "Aktualizace webu z lokálu"</span></li>
+                        <li>Odešlete to na GitHub: <span class="highlight">git push</span></li>
+                        <li>Zkontrolujte svůj veřejný GitHub Pages web. Za pár minut by se měla úprava projevit!</li>
+                    </ol>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Ovládací prvky -->
+    <div class="controls">
+        <button id="prevBtn" onclick="changeSlide(-1)">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            Předchozí
+        </button>
+        <div class="counter" id="counter">1 / 7</div>
+        <button id="nextBtn" onclick="changeSlide(1)">
+            Další
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const counter = document.getElementById('counter');
+        const progressBar = document.getElementById('progressBar');
+
+        function updateSlider() {
+            // Remove active class from all
+            slides.forEach(slide => {
+                slide.classList.remove('active');
+            });
+            
+            // Add active class to current
+            slides[currentSlide].classList.add('active');
+            
+            // Update texts and buttons
+            counter.innerText = `${currentSlide + 1} / ${slides.length}`;
+            prevBtn.disabled = currentSlide === 0;
+            
+            if (currentSlide === slides.length - 1) {
+                nextBtn.innerHTML = `Dokončit <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+            } else {
+                nextBtn.innerHTML = `Další <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>`;
+            }
+
+            // Update progress bar
+            const progressPercentage = ((currentSlide) / (slides.length - 1)) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+
+        function changeSlide(direction) {
+            if (currentSlide === slides.length - 1 && direction === 1) {
+                // Clicking finish on the last slide
+                return;
+            }
+            
+            currentSlide += direction;
+            if (currentSlide < 0) currentSlide = 0;
+            if (currentSlide >= slides.length) currentSlide = slides.length - 1;
+            
+            updateSlider();
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Space') {
+                if(currentSlide < slides.length - 1) changeSlide(1);
+            } else if (e.key === 'ArrowLeft') {
+                if(currentSlide > 0) changeSlide(-1);
+            }
+        });
+
+        // Initialize
+        updateSlider();
+    </script>
+</body>
+</html>
